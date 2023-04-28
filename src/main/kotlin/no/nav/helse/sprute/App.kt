@@ -19,27 +19,31 @@ fun main() {
 }
 
 val oppgaver = listOf(
-    PersistertOppgave(1, { nå, context ->
-        Logg.ny(Oppgave::class).info("hele timer kjører")
-        context.publish(datobegivenhet(nå, "ny_time"))
+    PersistertOppgave(1, { nå, nesteKjøring, context ->
+        val melding = datobegivenhet(nå, "ny_time", nesteKjøring)
+        Logg.ny(Oppgave::class).info("hele timer kjører, sender:\n$melding")
+        context.publish(melding)
     }, Ruteplan.HeleTimer),
-    PersistertOppgave(2, { nå, context ->
-        Logg.ny(Oppgave::class).info("halve timer kjører")
-        context.publish(datobegivenhet(nå, "halv_time"))
+    PersistertOppgave(2, { nå, nesteKjøring, context ->
+        val melding = datobegivenhet(nå, "halv_time", nesteKjøring)
+        Logg.ny(Oppgave::class).info("halve timer kjører, sender:\n$melding")
+        context.publish(melding)
     }, Ruteplan.HalveTimer),
-    PersistertOppgave(3, { nå, context ->
-        Logg.ny(Oppgave::class).info("midnatt kjører")
-        context.publish(datobegivenhet(nå, "midnatt"))
+    PersistertOppgave(3, { nå, nesteKjøring, context ->
+        val melding = datobegivenhet(nå, "midnatt", nesteKjøring)
+        Logg.ny(Oppgave::class).info("midnatt kjører, sender:\n$melding")
+        context.publish(melding)
     }, Ruteplan.Midnatt)
 )
 
-private fun datobegivenhet(nå: LocalDateTime, navn: String) = JsonMessage.newMessage(navn, mapOf(
+private fun datobegivenhet(nå: LocalDateTime, navn: String, nesteKjøring: LocalDateTime) = JsonMessage.newMessage(navn, mapOf(
     "time" to nå.hour,
     "klokkeslett" to nå.toLocalTime(),
     "dagen" to nå.toLocalDate(),
     "ukedag" to nå.dayOfWeek,
     "dagIMåned" to nå.dayOfMonth,
-    "måned" to nå.monthValue
+    "måned" to nå.monthValue,
+    "nesteKjøring" to nesteKjøring
 )).toJson()
 
 private class App(private val env: Map<String, String>) {

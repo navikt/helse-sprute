@@ -22,7 +22,7 @@ fun interface Ruteplan {
 }
 
 fun interface Oppgave {
-    fun utfør(nå: LocalDateTime, messageContext: MessageContext)
+    fun utfør(nå: LocalDateTime, nesteKjøring: LocalDateTime, messageContext: MessageContext)
 }
 
 class PlanlagtOppgave(
@@ -38,8 +38,9 @@ class PlanlagtOppgave(
 
     fun kjørOppgave(nå: LocalDateTime, messageContext: MessageContext): PlanlagtOppgave {
         if (nesteKjøring > nå) return this
-        oppgave.utfør(nå, messageContext)
-        return PlanlagtOppgave(id, nå, nesteKjøring(nå), oppgave, ruteplan)
+        val nyNesteKjøring = nesteKjøring(nå)
+        oppgave.utfør(nå, nyNesteKjøring, messageContext)
+        return PlanlagtOppgave(id, nå, nyNesteKjøring, oppgave, ruteplan)
     }
 
     fun memento() = OppgaveMemento(id, forrigeKjøring, nesteKjøring)

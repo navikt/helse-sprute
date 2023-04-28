@@ -25,7 +25,7 @@ class PlanlagtOppgaveTest {
     fun `hver hele time`() {
         val idag = LocalDate.now()
         val nå = idag.atTime(13, 30, 20)
-        val oppgave = PlanlagtOppgave.hverHeleTime(1, nå) { _, _ -> oppgaveKjørt = true }
+        val oppgave = PlanlagtOppgave.hverHeleTime(1, nå) { _, _, _ -> oppgaveKjørt = true }
         val forventetNesteKøring = idag.atTime(14, 0, 0)
 
         testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusHours(1))
@@ -35,7 +35,7 @@ class PlanlagtOppgaveTest {
     fun `hver halve time`() {
         val idag = LocalDate.now()
         val nå = idag.atTime(13, 14, 20)
-        val oppgave = PlanlagtOppgave.hverHalveTime(1, nå) { _, _ -> oppgaveKjørt = true }
+        val oppgave = PlanlagtOppgave.hverHalveTime(1, nå) { _, _, _ -> oppgaveKjørt = true }
         val forventetNesteKøring = idag.atTime(13, 30, 0)
 
         testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusMinutes(30))
@@ -46,7 +46,7 @@ class PlanlagtOppgaveTest {
         val idag = LocalDate.now()
         val iMorgen = idag.plusDays(1)
         val nå = idag.atTime(23, 59, 59)
-        val oppgave = PlanlagtOppgave.hverMidnatt(1, nå) { _, _ -> oppgaveKjørt = true }
+        val oppgave = PlanlagtOppgave.hverMidnatt(1, nå) { _, _, _ -> oppgaveKjørt = true }
         val forventetNesteKøring = iMorgen.atTime(0, 0, 0)
 
         testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusDays(1))
