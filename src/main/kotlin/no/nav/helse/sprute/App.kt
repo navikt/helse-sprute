@@ -20,7 +20,7 @@ fun main() {
 
 val oppgaver = listOf(
     PersistertOppgave(1, { nå, nesteKjøring, context ->
-        val melding = datobegivenhet(nå, "ny_time", nesteKjøring)
+        val melding = datobegivenhet(nå, "hel_time", nesteKjøring)
         Logg.ny(Oppgave::class).info("hele timer kjører, sender:\n$melding")
         context.publish(melding)
     }, Ruteplan.HeleTimer),
