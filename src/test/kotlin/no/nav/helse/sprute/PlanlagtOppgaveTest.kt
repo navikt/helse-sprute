@@ -34,9 +34,9 @@ class PlanlagtOppgaveTest {
     @Test
     fun `hver halve time`() {
         val idag = LocalDate.now()
-        val nå = idag.atTime(13, 30, 20)
+        val nå = idag.atTime(13, 14, 20)
         val oppgave = PlanlagtOppgave.hverHalveTime(1, nå) { _, _ -> oppgaveKjørt = true }
-        val forventetNesteKøring = idag.atTime(14, 0, 0)
+        val forventetNesteKøring = idag.atTime(13, 30, 0)
 
         testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusMinutes(30))
     }

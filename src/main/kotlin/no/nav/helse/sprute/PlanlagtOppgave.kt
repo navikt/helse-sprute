@@ -10,7 +10,9 @@ fun interface Ruteplan {
             (forrige ?: nå).plusHours(1).truncatedTo(ChronoUnit.HOURS)
         }
         val HalveTimer = Ruteplan { nå, forrige ->
-            (forrige ?: nå).plusMinutes(30).truncatedTo(ChronoUnit.MINUTES)
+            (forrige ?: nå).truncatedTo(ChronoUnit.MINUTES).let {
+                it.plusMinutes(30 - (it.minute + 30) % 30L)
+            }
         }
         val Midnatt = Ruteplan { nå, forrige ->
             (forrige ?: nå).plusDays(1).truncatedTo(ChronoUnit.DAYS)
