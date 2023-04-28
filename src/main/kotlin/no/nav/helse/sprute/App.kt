@@ -38,6 +38,7 @@ val oppgaver = listOf(
 
 private fun datobegivenhet(nå: LocalDateTime, navn: String, nesteKjøring: LocalDateTime) = JsonMessage.newMessage(navn, mapOf(
     "time" to nå.hour,
+    "minutt" to nå.minute,
     "klokkeslett" to nå.toLocalTime(),
     "dagen" to nå.toLocalDate(),
     "ukedag" to nå.dayOfWeek,
