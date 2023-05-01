@@ -1,6 +1,5 @@
 package no.nav.helse.sprute
 
-import no.nav.helse.rapids_rivers.MessageContext
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -22,7 +21,7 @@ fun interface Ruteplan {
 }
 
 fun interface Oppgave {
-    fun utfør(nå: LocalDateTime, nesteKjøring: LocalDateTime, messageContext: MessageContext)
+    fun utfør(nå: LocalDateTime, nesteKjøring: LocalDateTime)
 }
 
 class PlanlagtOppgave(
@@ -36,10 +35,10 @@ class PlanlagtOppgave(
 
     fun nesteKjøring(nå: LocalDateTime) = ruteplan.nesteKjøring(nå, forrigeKjøring)
 
-    fun kjørOppgave(nå: LocalDateTime, messageContext: MessageContext): PlanlagtOppgave {
+    fun kjørOppgave(nå: LocalDateTime): PlanlagtOppgave {
         if (nesteKjøring > nå) return this
         val nyNesteKjøring = nesteKjøring(nå)
-        oppgave.utfør(nå, nyNesteKjøring, messageContext)
+        oppgave.utfør(nå, nyNesteKjøring)
         return PlanlagtOppgave(id, nå, nyNesteKjøring, oppgave, ruteplan)
     }
 

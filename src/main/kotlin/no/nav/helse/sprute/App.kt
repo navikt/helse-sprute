@@ -98,8 +98,8 @@ private class Puls(private val dataSource: () -> DataSource) : River.PacketListe
 
         sessionOf(dataSource()).use { session ->
             oppgaver
-                .map { it.tilPlanlagtOppgave(session) }
-                .map { it.kjørOppgave(nå, context) }
+                .map { it.tilPlanlagtOppgave(session, context) }
+                .map { it.kjørOppgave(nå) }
                 .map { it.memento() }
                 .forEach { it.tilDatabase(session) }
         }
@@ -109,9 +109,12 @@ private class Puls(private val dataSource: () -> DataSource) : River.PacketListe
 }
 
 
+fun interface OppgaveMedContext {
+    fun utfør(nå: LocalDateTime, nesteKjøring: LocalDateTime, messageContext: MessageContext)
+}
 class PersistertOppgave(
     private val id: Int,
-    private val oppgave: Oppgave,
+    private val oppgave: OppgaveMedContext,
     private val ruteplan: Ruteplan
 ) {
 
@@ -121,14 +124,16 @@ class PersistertOppgave(
         session.run(queryOf(statement, id, ruteplan.nesteKjøring(nå, null)).asUpdate)
     }
 
-    fun tilPlanlagtOppgave(session: Session): PlanlagtOppgave {
+    fun tilPlanlagtOppgave(session: Session, messageContext: MessageContext): PlanlagtOppgave {
         @Language("PostgreSQL")
         val statement = "SELECT forrige_kjoring, neste_kjoring FROM oppgave WHERE id=?"
         val (forrige, neste) = session.run(queryOf(statement, id).map {
             it.localDateTimeOrNull("forrige_kjoring") to it.localDateTime("neste_kjoring")
         }.asList).single()
 
-        return PlanlagtOppgave(id, forrige, neste, oppgave, ruteplan)
+        return PlanlagtOppgave(id, forrige, neste, { nå, nesteKjøring ->
+            oppgave.utfør(nå, nesteKjøring, messageContext)
+        }, ruteplan)
     }
 }
 
