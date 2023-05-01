@@ -34,7 +34,12 @@ val oppgaver = listOf(
         val melding = datobegivenhet(nå, "midnatt", nesteKjøring)
         logger.info("midnatt kjører, sender:\n$melding")
         context.publish(melding)
-    }, Ruteplan.Midnatt)
+    }, Ruteplan.Midnatt),
+    PersistertOppgave(4, { nå, nesteKjøring, context, logger ->
+        val melding = datobegivenhet(nå, "minutt", nesteKjøring)
+        logger.info("minutt kjører, sender:\n$melding")
+        context.publish(melding)
+    }, Ruteplan.HeleMinutt)
 )
 
 private fun datobegivenhet(nå: LocalDateTime, navn: String, nesteKjøring: LocalDateTime) = JsonMessage.newMessage(navn, mapOf(

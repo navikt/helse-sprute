@@ -44,6 +44,16 @@ class PlanlagtOppgaveTest {
         testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusDays(1))
     }
 
+    @Test
+    fun `hvert minutt`() {
+        val idag = LocalDate.now()
+        val nå = idag.atTime(19, 59, 59)
+        val oppgave = PlanlagtOppgave.hvertMinutt(1, nå) { _, _ -> oppgaveKjørt = true }
+        val forventetNesteKøring = idag.atTime(20, 0, 0)
+
+        testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusMinutes(1))
+    }
+
     private fun testOppgave(oppgave: PlanlagtOppgave, nå: LocalDateTime, forventetNeste: LocalDateTime, forventetNesteNeste: LocalDateTime) {
         assertEquals(forventetNeste, oppgave.nesteKjøring(nå))
 
