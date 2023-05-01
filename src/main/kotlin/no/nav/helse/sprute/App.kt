@@ -2,6 +2,8 @@ package no.nav.helse.sprute
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.*
+import kotlinx.coroutines.time.delay
 import kotliquery.Session
 import kotliquery.queryOf
 import kotliquery.sessionOf
@@ -11,7 +13,6 @@ import org.intellij.lang.annotations.Language
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
-import javax.sql.DataSource
 
 fun main() {
     val env = System.getenv()
@@ -19,19 +20,19 @@ fun main() {
 }
 
 val oppgaver = listOf(
-    PersistertOppgave(1, { nå, nesteKjøring, context ->
+    PersistertOppgave(1, { nå, nesteKjøring, context, logger ->
         val melding = datobegivenhet(nå, "hel_time", nesteKjøring)
-        Logg.ny(Oppgave::class).info("hele timer kjører, sender:\n$melding")
+        logger.info("hele timer kjører, sender:\n$melding")
         context.publish(melding)
     }, Ruteplan.HeleTimer),
-    PersistertOppgave(2, { nå, nesteKjøring, context ->
+    PersistertOppgave(2, { nå, nesteKjøring, context, logger ->
         val melding = datobegivenhet(nå, "halv_time", nesteKjøring)
-        Logg.ny(Oppgave::class).info("halve timer kjører, sender:\n$melding")
+        logger.info("halve timer kjører, sender:\n$melding")
         context.publish(melding)
     }, Ruteplan.HalveTimer),
-    PersistertOppgave(3, { nå, nesteKjøring, context ->
+    PersistertOppgave(3, { nå, nesteKjøring, context, logger ->
         val melding = datobegivenhet(nå, "midnatt", nesteKjøring)
-        Logg.ny(Oppgave::class).info("midnatt kjører, sender:\n$melding")
+        logger.info("midnatt kjører, sender:\n$melding")
         context.publish(melding)
     }, Ruteplan.Midnatt)
 )
@@ -47,7 +48,7 @@ private fun datobegivenhet(nå: LocalDateTime, navn: String, nesteKjøring: Loca
     "nesteKjøring" to nesteKjøring
 )).toJson()
 
-private class App(private val env: Map<String, String>) {
+private class App(private val env: Map<String, String>) : RapidsConnection.StatusListener {
     private val logger = Logg.ny(this::class)
 
     private val hikariConfig = HikariConfig().apply {
@@ -60,57 +61,59 @@ private class App(private val env: Map<String, String>) {
 
     private val dataSource by lazy { HikariDataSource(hikariConfig) }
 
-    private val rapidsConnection = RapidApplication.create(env).apply {
-        River(this).register(Puls(::dataSource))
-        register(object : RapidsConnection.StatusListener {
-            override fun onStartup(rapidsConnection: RapidsConnection) {
-                logger.info("Migrerer database")
-                Flyway.configure()
-                    .dataSource(dataSource)
-                    .lockRetryCount(-1)
-                    .load()
-                    .migrate()
-                logger.info("Migrering ferdig!")
-                // todo: slett oppgaver i db som ikke finnes i kode
-                sessionOf(dataSource).use { session ->
-                    oppgaver.forEach { it.opprett(session, LocalDateTime.now()) }
-                }
-                logger.info("oppgaver syncet mot db, klar til pulsering")
-            }
-        })
+    private var forfallJob: Job? = null
+    private val rapidsConnection = RapidApplication.create(env)
+
+    init {
+        rapidsConnection.register(this)
     }
 
     fun run() {
         rapidsConnection.start()
     }
-}
 
-private class Puls(private val dataSource: () -> DataSource) : River.PacketListener {
-    private val logg = Logg.ny(this::class)
-    private var forrigePuls = LocalDateTime.MIN
-    private val pulsering = Duration.ofSeconds(30)
-
-    override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        val nå = LocalDateTime.now()
-        if (nå.minus(pulsering) < forrigePuls) return
-        forrigePuls = nå
-        logg.info("pulserer, henter oppgaver og sjekker om de trenger å kjøre")
-
-        sessionOf(dataSource()).use { session ->
-            oppgaver
-                .map { it.tilPlanlagtOppgave(session, context) }
-                .map { it.kjørOppgave(nå) }
-                .map { it.memento() }
-                .forEach { it.tilDatabase(session) }
+    override fun onStartup(rapidsConnection: RapidsConnection) {
+        logger.info("Migrerer database")
+        Flyway.configure()
+            .dataSource(dataSource)
+            .lockRetryCount(-1)
+            .load()
+            .migrate()
+        logger.info("Migrering ferdig!")
+        // todo: slett oppgaver i db som ikke finnes i kode
+        sessionOf(dataSource).use { session ->
+            oppgaver.forEach { it.opprett(session, LocalDateTime.now()) }
         }
+        logger.info("oppgaver syncet mot db, klar til pulsering")
+        forfallJob = GlobalScope.launch { kjørOppgaverTilForfall(rapidsConnection) }
+    }
 
-        logg.info("pulsering ferdig")
+    override fun onShutdownSignal(rapidsConnection: RapidsConnection) {
+        logger.info("stopper oppgave-jobben")
+        forfallJob?.cancel()
+    }
+
+    private suspend fun CoroutineScope.kjørOppgaverTilForfall(rapidsConnection: RapidsConnection) {
+        while (isActive) {
+            logger.info("pulserer, henter oppgaver og sjekker om de trenger å kjøre")
+            val nå = LocalDateTime.now()
+            sessionOf(dataSource).use { session ->
+                oppgaver
+                    .map { it.tilPlanlagtOppgave(session, rapidsConnection, logger) }
+                    .map { it.kjørOppgave(nå) }
+                    .map { it.memento() }
+                    .forEach { it.tilDatabase(session) }
+            }
+
+            logger.info("pulsering ferdig")
+            delay(Duration.ofSeconds(5))
+        }
     }
 }
 
 
 fun interface OppgaveMedContext {
-    fun utfør(nå: LocalDateTime, nesteKjøring: LocalDateTime, messageContext: MessageContext)
+    fun utfør(nå: LocalDateTime, nesteKjøring: LocalDateTime, messageContext: MessageContext, logger: Logg)
 }
 class PersistertOppgave(
     private val id: Int,
@@ -124,7 +127,7 @@ class PersistertOppgave(
         session.run(queryOf(statement, id, ruteplan.nesteKjøring(nå, null)).asUpdate)
     }
 
-    fun tilPlanlagtOppgave(session: Session, messageContext: MessageContext): PlanlagtOppgave {
+    fun tilPlanlagtOppgave(session: Session, messageContext: MessageContext, logger: Logg): PlanlagtOppgave {
         @Language("PostgreSQL")
         val statement = "SELECT forrige_kjoring, neste_kjoring FROM oppgave WHERE id=?"
         val (forrige, neste) = session.run(queryOf(statement, id).map {
@@ -132,7 +135,7 @@ class PersistertOppgave(
         }.asList).single()
 
         return PlanlagtOppgave(id, forrige, neste, { nå, nesteKjøring ->
-            oppgave.utfør(nå, nesteKjøring, messageContext)
+            oppgave.utfør(nå, nesteKjøring, messageContext, logger)
         }, ruteplan)
     }
 }
