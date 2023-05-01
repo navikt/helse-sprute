@@ -134,7 +134,7 @@ class PersistertOppgave(
     fun opprett(session: Session, nå: LocalDateTime) {
         @Language("PostgreSQL")
         val statement = "INSERT INTO oppgave (id, neste_kjoring) VALUES (?, ?) ON CONFLICT DO NOTHING;"
-        session.run(queryOf(statement, id, ruteplan.nesteKjøring(nå, null)).asUpdate)
+        session.run(queryOf(statement, id, ruteplan.nesteKjøring(nå)).asUpdate)
     }
 
     fun tilPlanlagtOppgave(session: Session, messageContext: MessageContext, logger: Logg): PlanlagtOppgave {

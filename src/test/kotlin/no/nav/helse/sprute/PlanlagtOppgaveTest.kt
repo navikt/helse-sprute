@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 class PlanlagtOppgaveTest {
     private var oppgaveKjørt: Boolean = false
@@ -52,6 +53,26 @@ class PlanlagtOppgaveTest {
         val forventetNesteKøring = idag.atTime(20, 0, 0)
 
         testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusMinutes(1))
+    }
+
+    @Test
+    fun baz() {
+        val idag = LocalDate.now()
+        val nå = LocalTime.of(12, 33, 5).atDate(idag)
+        val forrigeKøring = LocalTime.of(12, 32, 0).atDate(idag)
+        val nesteKjøring = LocalTime.of(12, 33, 3).atDate(idag)
+
+        val oppgave = PlanlagtOppgave(1, forrigeKøring, nesteKjøring, Oppgave { _, _ ->
+            oppgaveKjørt = true
+        }, Ruteplan.HeleMinutt)
+
+        val oppgave2 = oppgave.kjørOppgave(nå)
+        assertTrue(oppgaveKjørt)
+        assertNotSame(oppgave, oppgave2)
+
+        oppgaveKjørt = false
+        oppgave2.kjørOppgave(nå)
+        assertFalse(oppgaveKjørt)
     }
 
     private fun testOppgave(oppgave: PlanlagtOppgave, nå: LocalDateTime, forventetNeste: LocalDateTime, forventetNesteNeste: LocalDateTime) {
