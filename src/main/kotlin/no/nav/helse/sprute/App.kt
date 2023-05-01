@@ -99,15 +99,20 @@ private class App(private val env: Map<String, String>) : RapidsConnection.Statu
     }
 
     private suspend fun CoroutineScope.kjørOppgaverTilForfall(rapidsConnection: RapidsConnection) {
+        @Language("PostgreSQL")
+        val statement = "SELECT * FROM oppgave FOR UPDATE;"
         while (isActive) {
             logger.info("pulserer, henter oppgaver og sjekker om de trenger å kjøre")
             val nå = LocalDateTime.now()
             sessionOf(dataSource).use { session ->
-                oppgaver
-                    .map { it.tilPlanlagtOppgave(session, rapidsConnection, logger) }
-                    .map { it.kjørOppgave(nå) }
-                    .map { it.memento() }
-                    .forEach { it.tilDatabase(session) }
+                session.transaction { txSession ->
+                    txSession.run(queryOf(statement).asExecute)
+                    oppgaver
+                        .map { it.tilPlanlagtOppgave(txSession, rapidsConnection, logger) }
+                        .map { it.kjørOppgave(nå) }
+                        .map { it.memento() }
+                        .forEach { it.tilDatabase(txSession) }
+                }
             }
 
             logger.info("pulsering ferdig")
