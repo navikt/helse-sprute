@@ -16,6 +16,11 @@ fun interface Ruteplan {
                 it.plusMinutes(30 - (it.minute + 30) % 30L)
             }
         }
+        val FemtenMinutt = Ruteplan { nå ->
+            nå.truncatedTo(ChronoUnit.MINUTES).let {
+                it.plusMinutes(15 - (it.minute + 15) % 15L)
+            }
+        }
         val Midnatt = Ruteplan { nå ->
             nå.plusDays(1).truncatedTo(ChronoUnit.DAYS)
         }
@@ -52,6 +57,7 @@ class PlanlagtOppgave(
 
         fun hverHeleTime(id: Int, nå: LocalDateTime, oppgave: Oppgave) = ny(id, nå, oppgave, Ruteplan.HeleTimer)
         fun hverHalveTime(id: Int, nå: LocalDateTime, oppgave: Oppgave) = ny(id, nå, oppgave, Ruteplan.HalveTimer)
+        fun hvert15MinuttTime(id: Int, nå: LocalDateTime, oppgave: Oppgave) = ny(id, nå, oppgave, Ruteplan.FemtenMinutt)
         fun hverMidnatt(id: Int, nå: LocalDateTime, oppgave: Oppgave) = ny(id, nå, oppgave, Ruteplan.Midnatt)
         fun hvertMinutt(id: Int, nå: LocalDateTime, oppgave: Oppgave) = ny(id, nå, oppgave, Ruteplan.HeleMinutt)
     }

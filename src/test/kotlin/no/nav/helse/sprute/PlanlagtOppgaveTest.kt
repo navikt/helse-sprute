@@ -35,6 +35,15 @@ class PlanlagtOppgaveTest {
     }
 
     @Test
+    fun `hvert 15 minutt`() {
+        val idag = LocalDate.now()
+        val nå = idag.atTime(13, 14, 20)
+        val oppgave = PlanlagtOppgave.hvert15MinuttTime(1, nå) { _, _ -> oppgaveKjørt = true }
+        val forventetNesteKøring = idag.atTime(13, 15, 0)
+        testOppgave(oppgave, nå, forventetNesteKøring, forventetNesteKøring.plusMinutes(15))
+    }
+
+    @Test
     fun `hver midnatt`() {
         val idag = LocalDate.now()
         val iMorgen = idag.plusDays(1)
@@ -64,7 +73,7 @@ class PlanlagtOppgaveTest {
 
         val oppgave = PlanlagtOppgave(1, forrigeKøring, nesteKjøring, Oppgave { _, _ ->
             oppgaveKjørt = true
-        }, Ruteplan.HeleMinutt)
+        }, Ruteplan.HalveTimer)
 
         val oppgave2 = oppgave.kjørOppgave(nå)
         assertTrue(oppgaveKjørt)
