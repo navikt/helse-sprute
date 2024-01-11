@@ -50,4 +50,4 @@ jobs:
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: .nais/app.yml
           VARS: .nais/${{ matrix.cluster }}.yml
-          IMAGE: ${{ needs.set_version.outputs.image }}
+          IMAGE: ${{ needs.build.outputs.image }}
