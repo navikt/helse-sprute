@@ -53,6 +53,7 @@ private fun datobegivenhet(nå: LocalDateTime, navn: String, nesteKjøring: Loca
     "klokkeslett" to nå.toLocalTime(),
     "dagen" to nå.toLocalDate(),
     "ukedag" to nå.dayOfWeek,
+    "dagIUke" to nå.dayOfWeek.value,
     "dagIMåned" to nå.dayOfMonth,
     "måned" to nå.monthValue,
     "nesteKjøring" to nesteKjøring
