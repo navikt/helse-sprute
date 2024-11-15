@@ -32,7 +32,6 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
 
-    testImplementation("org.testcontainers:postgresql:1.19.5")
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
