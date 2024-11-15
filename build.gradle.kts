@@ -1,5 +1,6 @@
 val junitJupiterVersion = "5.11.3"
 val rapidsAndRiversVersion = "2024111509181731658731.11009b44c672"
+val hikariCPVersion = "6.1.0"
 
 plugins {
     kotlin("jvm") version "2.0.21"
@@ -26,7 +27,7 @@ dependencies {
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
     implementation("org.postgresql:postgresql:42.7.2")
     implementation("com.github.seratch:kotliquery:1.9.0")
-    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.flywaydb:flyway-core:9.17.0")
 
     testImplementation("org.testcontainers:postgresql:1.19.5")
