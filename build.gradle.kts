@@ -1,5 +1,5 @@
 val junitJupiterVersion = "5.11.3"
-val rapidsAndRiversVersion = "2024111509181731658731.11009b44c672"
+val rapidsAndRiversVersion = "2024111809201731918023.7c8474fdd5eb"
 val hikariCPVersion = "6.1.0"
 val flywayVersion = "10.21.0"
 val postgresqlVersion = "42.7.4"
