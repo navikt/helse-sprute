@@ -36,6 +36,8 @@ jobs:
     name: deploy
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +48,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: nais/deploy/actions/deploy@v2
         env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: .nais/app.yml
           VARS: .nais/${{ matrix.cluster }}.yml
