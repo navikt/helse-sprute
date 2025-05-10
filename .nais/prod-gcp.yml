@@ -1,2 +1,2 @@
 kafkaPool: nav-prod
-dbTier: db-custom-4-16384
+dbTier: db-custom-1-3840
