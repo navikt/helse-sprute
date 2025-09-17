@@ -2,7 +2,7 @@ val junitJupiterVersion = "5.12.1"
 val rapidsAndRiversVersion = "2025081612341755340488.ff2c2d01e04f"
 val hikariCPVersion = "6.3.0"
 val flywayVersion = "11.5.0"
-val postgresqlVersion = "42.7.5"
+val postgresqlVersion = "42.7.7"
 
 plugins {
     kotlin("jvm") version "2.2.10"
