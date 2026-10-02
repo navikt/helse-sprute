@@ -6,7 +6,6 @@ metadata:
   labels:
     team: tbd
 spec:
-  image: {{image}}
   port: 8080
   liveness:
     path: isalive
@@ -29,32 +28,11 @@ spec:
   prometheus:
     enabled: true
     path: /metrics
-  kafka:
-    pool: {{kafkaPool}}
   accessPolicy:
     outbound:
       rules:
         - application: logging
           namespace: nais-system
-  gcp:
-    sqlInstances:
-      - type: POSTGRES_17
-        diskAutoresize: true
-        pointInTimeRecovery: true
-        tier: {{dbTier}}
-        name: sprute
-        databases:
-          - name: sprute
-            envVarPrefix: DATABASE
-        flags:
-          - name: cloudsql.enable_pgaudit
-            value: "{{pgAudit}}"
-          - name: pgaudit.log
-            value: "write,ddl,role"
-          - name: pgaudit.log_parameter
-            value: "on"
-          - name: pgaudit.log_relation
-            value: "on"
   env:
     - name: KAFKA_CONSUMER_GROUP_ID
       value: tbd-sprute-v1
