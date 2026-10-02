@@ -9,6 +9,7 @@ import java.time.LocalTime
 
 class PlanlagtOppgaveTest {
     private var oppgaveKjørt: Boolean = false
+
     @BeforeEach
     fun setup() {
         oppgaveKjørt = false
@@ -71,9 +72,16 @@ class PlanlagtOppgaveTest {
         val forrigeKøring = LocalTime.of(12, 32, 0).atDate(idag)
         val nesteKjøring = LocalTime.of(12, 33, 3).atDate(idag)
 
-        val oppgave = PlanlagtOppgave(1, forrigeKøring, nesteKjøring, Oppgave { _, _ ->
-            oppgaveKjørt = true
-        }, Ruteplan.HalveTimer)
+        val oppgave =
+            PlanlagtOppgave(
+                1,
+                forrigeKøring,
+                nesteKjøring,
+                Oppgave { _, _ ->
+                    oppgaveKjørt = true
+                },
+                Ruteplan.HalveTimer,
+            )
 
         val oppgave2 = oppgave.kjørOppgave(nå)
         assertTrue(oppgaveKjørt)
@@ -84,7 +92,12 @@ class PlanlagtOppgaveTest {
         assertFalse(oppgaveKjørt)
     }
 
-    private fun testOppgave(oppgave: PlanlagtOppgave, nå: LocalDateTime, forventetNeste: LocalDateTime, forventetNesteNeste: LocalDateTime) {
+    private fun testOppgave(
+        oppgave: PlanlagtOppgave,
+        nå: LocalDateTime,
+        forventetNeste: LocalDateTime,
+        forventetNesteNeste: LocalDateTime,
+    ) {
         assertEquals(forventetNeste, oppgave.nesteKjøring(nå))
 
         assertSame(oppgave, oppgave.kjørOppgave(nå))

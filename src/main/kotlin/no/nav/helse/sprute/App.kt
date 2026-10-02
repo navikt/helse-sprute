@@ -22,56 +22,68 @@ fun main() {
     App(env).run()
 }
 
-val oppgaver = listOf(
-    PersistertOppgave(1, { nå, nesteKjøring, context, logger ->
-        val melding = datobegivenhet(nå, "hel_time", nesteKjøring)
-        logger.info("hele timer kjører, sender:\n$melding")
-        context.publish(melding)
-    }, Ruteplan.HeleTimer),
-    PersistertOppgave(2, { nå, nesteKjøring, context, logger ->
-        val melding = datobegivenhet(nå, "halv_time", nesteKjøring)
-        logger.info("halve timer kjører, sender:\n$melding")
-        context.publish(melding)
-    }, Ruteplan.HalveTimer),
-    PersistertOppgave(3, { nå, nesteKjøring, context, logger ->
-        val melding = datobegivenhet(nå, "midnatt", nesteKjøring)
-        logger.info("midnatt kjører, sender:\n$melding")
-        context.publish(melding)
-    }, Ruteplan.Midnatt),
-    PersistertOppgave(4, { nå, nesteKjøring, context, logger ->
-        val melding = datobegivenhet(nå, "minutt", nesteKjøring)
-        logger.info("minutt kjører, sender:\n$melding")
-        context.publish(melding)
-    }, Ruteplan.HeleMinutt),
-    PersistertOppgave(5, { nå, nesteKjøring, context, logger ->
-        val melding = datobegivenhet(nå, "kvarter", nesteKjøring)
-        logger.info("kvarter kjører, sender:\n$melding")
-        context.publish(melding)
-    }, Ruteplan.FemtenMinutt)
-)
+val oppgaver =
+    listOf(
+        PersistertOppgave(1, { nå, nesteKjøring, context, logger ->
+            val melding = datobegivenhet(nå, "hel_time", nesteKjøring)
+            logger.info("hele timer kjører, sender:\n$melding")
+            context.publish(melding)
+        }, Ruteplan.HeleTimer),
+        PersistertOppgave(2, { nå, nesteKjøring, context, logger ->
+            val melding = datobegivenhet(nå, "halv_time", nesteKjøring)
+            logger.info("halve timer kjører, sender:\n$melding")
+            context.publish(melding)
+        }, Ruteplan.HalveTimer),
+        PersistertOppgave(3, { nå, nesteKjøring, context, logger ->
+            val melding = datobegivenhet(nå, "midnatt", nesteKjøring)
+            logger.info("midnatt kjører, sender:\n$melding")
+            context.publish(melding)
+        }, Ruteplan.Midnatt),
+        PersistertOppgave(4, { nå, nesteKjøring, context, logger ->
+            val melding = datobegivenhet(nå, "minutt", nesteKjøring)
+            logger.info("minutt kjører, sender:\n$melding")
+            context.publish(melding)
+        }, Ruteplan.HeleMinutt),
+        PersistertOppgave(5, { nå, nesteKjøring, context, logger ->
+            val melding = datobegivenhet(nå, "kvarter", nesteKjøring)
+            logger.info("kvarter kjører, sender:\n$melding")
+            context.publish(melding)
+        }, Ruteplan.FemtenMinutt),
+    )
 
-private fun datobegivenhet(nå: LocalDateTime, navn: String, nesteKjøring: LocalDateTime) = JsonMessage.newMessage(navn, mapOf(
-    "time" to nå.hour,
-    "minutt" to nå.minute,
-    "klokkeslett" to nå.toLocalTime(),
-    "dagen" to nå.toLocalDate(),
-    "ukedag" to nå.dayOfWeek,
-    "dagIUke" to nå.dayOfWeek.value,
-    "dagIMåned" to nå.dayOfMonth,
-    "måned" to nå.monthValue,
-    "nesteKjøring" to nesteKjøring
-)).toJson()
+private fun datobegivenhet(
+    nå: LocalDateTime,
+    navn: String,
+    nesteKjøring: LocalDateTime,
+) = JsonMessage
+    .newMessage(
+        navn,
+        mapOf(
+            "time" to nå.hour,
+            "minutt" to nå.minute,
+            "klokkeslett" to nå.toLocalTime(),
+            "dagen" to nå.toLocalDate(),
+            "ukedag" to nå.dayOfWeek,
+            "dagIUke" to nå.dayOfWeek.value,
+            "dagIMåned" to nå.dayOfMonth,
+            "måned" to nå.monthValue,
+            "nesteKjøring" to nesteKjøring,
+        ),
+    ).toJson()
 
-private class App(private val env: Map<String, String>) : RapidsConnection.StatusListener {
+private class App(
+    private val env: Map<String, String>,
+) : RapidsConnection.StatusListener {
     private val logger = Logg.ny(this::class)
 
-    private val hikariConfig = HikariConfig().apply {
-        jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", env.getValue("DATABASE_HOST"), env.getValue("DATABASE_PORT"), env.getValue("DATABASE_DATABASE"))
-        username = env.getValue("DATABASE_USERNAME")
-        password = env.getValue("DATABASE_PASSWORD")
-        maximumPoolSize = 3
-        initializationFailTimeout = Duration.ofMinutes(30).toMillis()
-    }
+    private val hikariConfig =
+        HikariConfig().apply {
+            jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", env.getValue("DATABASE_HOST"), env.getValue("DATABASE_PORT"), env.getValue("DATABASE_DATABASE"))
+            username = env.getValue("DATABASE_USERNAME")
+            password = env.getValue("DATABASE_PASSWORD")
+            maximumPoolSize = 3
+            initializationFailTimeout = Duration.ofMinutes(30).toMillis()
+        }
 
     private val dataSource by lazy { HikariDataSource(hikariConfig) }
 
@@ -88,7 +100,8 @@ private class App(private val env: Map<String, String>) : RapidsConnection.Statu
 
     override fun onStartup(rapidsConnection: RapidsConnection) {
         logger.info("Migrerer database")
-        Flyway.configure()
+        Flyway
+            .configure()
             .dataSource(dataSource)
             .lockRetryCount(-1)
             .load()
@@ -137,28 +150,44 @@ private class App(private val env: Map<String, String>) : RapidsConnection.Statu
     }
 }
 
-
 fun interface OppgaveMedContext {
-    fun utfør(nå: LocalDateTime, nesteKjøring: LocalDateTime, messageContext: MessageContext, logger: Logg)
+    fun utfør(
+        nå: LocalDateTime,
+        nesteKjøring: LocalDateTime,
+        messageContext: MessageContext,
+        logger: Logg,
+    )
 }
+
 class PersistertOppgave(
     private val id: Int,
     private val oppgave: OppgaveMedContext,
-    private val ruteplan: Ruteplan
+    private val ruteplan: Ruteplan,
 ) {
-
-    fun opprett(session: Session, nå: LocalDateTime) {
+    fun opprett(
+        session: Session,
+        nå: LocalDateTime,
+    ) {
         @Language("PostgreSQL")
         val statement = "INSERT INTO oppgave (id, neste_kjoring) VALUES (?, ?) ON CONFLICT DO NOTHING;"
         session.run(queryOf(statement, id, ruteplan.nesteKjøring(nå)).asUpdate)
     }
 
-    fun tilPlanlagtOppgave(session: Session, messageContext: MessageContext, logger: Logg): PlanlagtOppgave {
+    fun tilPlanlagtOppgave(
+        session: Session,
+        messageContext: MessageContext,
+        logger: Logg,
+    ): PlanlagtOppgave {
         @Language("PostgreSQL")
         val statement = "SELECT forrige_kjoring, neste_kjoring FROM oppgave WHERE id=?"
-        val (forrige, neste) = session.run(queryOf(statement, id).map {
-            it.localDateTimeOrNull("forrige_kjoring") to it.localDateTime("neste_kjoring")
-        }.asList).single()
+        val (forrige, neste) =
+            session
+                .run(
+                    queryOf(statement, id)
+                        .map {
+                            it.localDateTimeOrNull("forrige_kjoring") to it.localDateTime("neste_kjoring")
+                        }.asList,
+                ).single()
 
         return PlanlagtOppgave(id, forrige, neste, { nå, nesteKjøring ->
             oppgave.utfør(nå, nesteKjøring, messageContext, logger)
@@ -166,7 +195,11 @@ class PersistertOppgave(
     }
 }
 
-class OppgaveMemento(private val id: Int, private val forrigeKjøring: LocalDateTime?, private val nesteKjøring: LocalDateTime) {
+class OppgaveMemento(
+    private val id: Int,
+    private val forrigeKjøring: LocalDateTime?,
+    private val nesteKjøring: LocalDateTime,
+) {
     fun tilDatabase(session: Session) {
         @Language("PostgreSQL")
         val statement = "UPDATE oppgave SET forrige_kjoring=?, neste_kjoring=? WHERE id=?"
