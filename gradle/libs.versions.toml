@@ -1,5 +1,5 @@
 [versions]
-sykepengerGradlePlugins = "20261001.1830"
+sykepengerGradlePlugins = "20261013.1718"
 
 [libraries]
 flyway-postgresql = "org.flywaydb:flyway-database-postgresql:13.9.0"
